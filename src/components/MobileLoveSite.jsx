@@ -4,56 +4,33 @@ import { motion } from "framer-motion";
 
 const OUR_STORY = `Kadang semesta punya cara yang aneh tapi indah buat mempertemukan dua orang.
 Nggak direncanain, nggak disengaja, cuma kebetulan yang ternyata berarti besar.
-Awalnya cuma basa-basi, obrolan ringan, dan tawa kecil — tapi lama-lama jadi cerita.
-
-Ada momen-momen kecil: pesan tengah malam, ngopi bareng, ngetawain hal remeh.
-Ada juga ujian: beda jadwal, salah paham kecil, tapi kita belajar buat beresin.
-Yang penting: kita selalu kembali, dan kita selalu mau berusaha.
-
-Pada 23 Juli 2025 kita memilih buat lanjut bareng. Bukan sekadar 'pacaran',
-tapi niat buat saling menjaga, tumbuh bareng, dan nulis masa depan.
-Hari itu bukan akhir — itu awal dari sesuatu yang lebih nyata dan hangat.
-
-Terima kasih untuk semua tawa, kesabaran, dan harapan.
-Ini kisah dua orang yang bersyukur; dari perkenalan kecil, semesta ternyata
-membuka babak yang penuh warna.`;
+... (singkatkan kalau mau)`;
 
 export default function MobileLoveSite() {
   const [audio, setAudio] = useState(null);
   const [musicPlaying, setMusicPlaying] = useState(false);
+  const [audioReady, setAudioReady] = useState(false);
+  const [showInitOverlay, setShowInitOverlay] = useState(true);
   const [showGame, setShowGame] = useState(false);
 
-  // prepare audio on first user touch (so browser allows play later)
-  useEffect(() => {
-    const prepareAudioOnFirstTouch = async () => {
-      try {
-        const bg = new Audio("/music.mp3");
-        bg.loop = true;
-        await bg.play(); // allowed because it's triggered by touch/click handler
-        bg.pause();
-        bg.currentTime = 0;
-        setAudio(bg);
-      } catch (e) {
-        console.log("prepareAudioOnFirstTouch error:", e);
-      }
-    };
-
-    const handler = () => {
-      prepareAudioOnFirstTouch();
-      document.removeEventListener("touchstart", handler);
-      document.removeEventListener("click", handler);
-    };
-
-    document.addEventListener("touchstart", handler, { passive: true });
-    document.addEventListener("click", handler, { once: true });
-
-    return () => {
-      document.removeEventListener("touchstart", handler);
-      document.removeEventListener("click", handler);
-      try { if (audio) { audio.pause(); audio.currentTime = 0; } } catch (e) {}
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // create & prepare audio when user explicitly taps the overlay button
+  const initAudio = async () => {
+    try {
+      const bg = new Audio("/music.mp3");
+      bg.loop = true;
+      // attempt to play briefly as direct result of the tap
+      await bg.play();
+      bg.pause();
+      bg.currentTime = 0;
+      setAudio(bg);
+      setAudioReady(true);
+      setShowInitOverlay(false);
+      // give user visual feedback
+    } catch (e) {
+      console.log("initAudio error:", e);
+      alert("Gagal inisialisasi audio. Coba ulangi sekali lagi.");
+    }
+  };
 
   const toggleMusic = async () => {
     try {
@@ -63,6 +40,7 @@ export default function MobileLoveSite() {
         return;
       }
 
+      // if audio hasn't been prepared (shouldn't happen if overlay used), try fallback
       let bg = audio;
       if (!bg) {
         bg = new Audio("/music.mp3");
@@ -74,9 +52,17 @@ export default function MobileLoveSite() {
       setMusicPlaying(true);
     } catch (e) {
       console.log("Toggle play error:", e);
-      alert("Gagal memutar musik — coba tekan layar sekali lalu tekan tombol musik lagi.");
+      alert("Gagal memutar musik. Tekan tombol enable audio dulu (tap layar sekali), lalu coba play.");
     }
   };
+
+  useEffect(() => {
+    return () => {
+      try {
+        if (audio) { audio.pause(); audio.currentTime = 0; }
+      } catch (e) {}
+    };
+  }, [audio]);
 
   return (
     <div className="min-h-screen p-4 flex flex-col items-center">
@@ -97,6 +83,14 @@ export default function MobileLoveSite() {
             {musicPlaying ? "🔊 Music On" : "🔇 Tap to Play Music"}
           </button>
         </section>
+
+        <div className="mt-3 text-center text-xs">
+          {audioReady ? (
+            <span className="text-green-600">Audio siap — tekan tombol untuk memulai</span>
+          ) : (
+            <span className="text-red-500">Audio belum diinisialisasi — tap enable dulu</span>
+          )}
+        </div>
 
         <article className="bg-white rounded-2xl p-4 mt-4 shadow-md">
           <h2 className="text-sm font-bold mb-2">Our Story</h2>
@@ -137,6 +131,41 @@ export default function MobileLoveSite() {
 
         <footer className="mt-6 text-xs text-gray-500 text-center">© 2025 Chris & Ita — Made with pixels & love</footer>
       </main>
+
+      {/* BIG overlay that forces user to tap once to initialize audio */}
+      {showInitOverlay && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(11,16,32,0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div style={{ textAlign: "center", color: "white", padding: 20 }}>
+            <h3 style={{ marginBottom: 8, fontSize: 18 }}>Klik layar untuk mengaktifkan musik</h3>
+            <p style={{ marginBottom: 12, fontSize: 12, opacity: 0.9 }}>
+              Tekan sekali di bawah untuk mengizinkan pemutaran musik.
+            </p>
+            <button
+              onClick={initAudio}
+              style={{
+                background: "#ff6fa3",
+                color: "white",
+                padding: "10px 18px",
+                borderRadius: 12,
+                fontWeight: 600,
+              }}
+            >
+              Enable Audio
+            </button>
+            <div style={{ marginTop: 10, fontSize: 12, opacity: 0.9 }}>Jika gagal, ulangi tekan sekali lagi.</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
