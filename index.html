@@ -1,99 +1,76 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Chris & Ita — Mobile</title>
-<style>
-body{font-family:system-ui,Arial;margin:0;background:#fff;color:#222;padding:18px}
-.container{max-width:720px;margin:0 auto}
-.header{display:flex;align-items:center;flex-direction:column;gap:12px}
-.button{background:linear-gradient(90deg,#ff8a65,#ff3d81);color:#fff;padding:12px 22px;border-radius:30px;border:none;font-weight:700;cursor:pointer}
-.card{background:#fff;border-radius:12px;padding:16px;margin-top:14px;box-shadow:0 10px 30px rgba(0,0,0,0.06)}
-.gallery{display:flex;gap:10px;justify-content:center;margin-top:12px}
-.thumb{width:110px;height:110px;border-radius:12px;object-fit:cover}
-footer{margin-top:24px;text-align:center;color:#777}
-.audio-note{color:#1b9b7a;margin-top:6px;font-weight:700}
-</style>
-</head><body>
-<div class="container">
-  <div class="header">
-    <h1>💞 Chris & Ita</h1>
-    <button id="musicBtn" class="button">Music On</button>
-    <div id="audioStatus" class="audio-note">Audio ready — tekan tombol untuk mulai</div>
-  </div>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>The Story of Us — Chris & Ita (Pixel Edition)</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <img src="public/sky-bg.png" class="sky" alt="" aria-hidden="true">
+      <div class="title-wrap">
+        <h1>The Story of Us</h1>
+        <h2>Chris &amp; Ita</h2>
+      </div>
+      <img src="public/couple.gif" alt="pixel couple" class="couple" />
+    </header>
 
-  <div class="card">
-    <h3>Our Story</h3>
-    <p id="storyPreview">Kadang semesta punya cara yang aneh tapi indah buat mempertemukan dua orang. Nggak direncanain, nggak disengaja... <span id="moreToggle" style="color:#ff5b8a;cursor:pointer">Baca selengkapnya</span></p>
-    <div id="storyFull" style="display:none">Waktu, tempat, dan rasa — semuanya kayak udah disusun rapi dari awal. Dan akhirnya, dua hati yang nggak saling cari... ketemu juga. Ini bagian cerita lengkap yang bisa diedit kapan saja. Tambah baris, foto, dan kenangan di sini.</div>
-  </div>
+    <section class="center">
+      <button id="musicBtn" class="music-btn">▶️ Tap to Play Music</button>
+      <p class="hint">Tekan tombol untuk mengaktifkan musik & animasi pixel.</p>
+    </section>
 
-  <div class="card">
-    <h3>Gallery Kenangan</h3>
-    <div class="gallery">
-      <img src="public/1.jpg" class="thumb" onerror="this.style.visibility='hidden'">
-      <img src="public/2.jpg" class="thumb" onerror="this.style.visibility='hidden'">
-      <img src="public/3.jpg" class="thumb" onerror="this.style.visibility='hidden'">
-    </div>
-  </div>
+    <section class="card story">
+      <h3>Our Story</h3>
+      <p id="storyShort">Kadang semesta punya cara yang aneh tapi indah buat mempertemukan dua orang. Nggak direncanain, nggak disengaja, cuma kebetulan yang ternyata berarti besar. <span id="readMore" class="read-more">Baca selengkapnya</span></p>
+      <p id="storyFull" class="hidden">Begitulah awal cerita kita — dua orang yang awalnya dikenalkan oleh teman, tanpa tahu kalau pertemuan sederhana itu bakal berubah jadi sesuatu yang istimewa. Awalnya cuma basa-basi, obrolan ringan, dan tawa kecil yang nggak disangka bisa tumbuh jadi rasa. Sampai akhirnya, <strong>23 Juli 2025</strong>, jadi hari yang kita simpan baik-baik. Hari di mana dua hati yang awalnya cuma dikenalkan memutuskan untuk jalan bareng — bukan cuma sekarang, tapi masa depan juga. Kita belajar saling paham, saling tumbuh, dan saling menjaga. Terima kasih sudah jadi bagian dari kisah kami.</p>
+    </section>
 
-  <div class="card">
-    <h3>Momen Day 1 Pacaran</h3>
-    <video id="day1video" src="public/day1.mp4" controls playsinline webkit-playsinline poster="" style="width:100%;border-radius:12px;background:#000"></video>
-    <p style="color:#666">Tekan play — kalau musik site belum aktif, tekan tombol Music dulu.</p>
-  </div>
+    <section class="card gallery">
+      <h3>Gallery Kenangan</h3>
+      <div class="grid">
+        <img src="public/foto1.jpg" alt="foto1" class="thumb">
+        <img src="public/foto2.jpg" alt="foto2" class="thumb">
+        <div class="center-slot">💗 Our Memories</div>
+        <img src="public/foto3.jpg" alt="foto3" class="thumb">
+        <img src="public/foto4.jpg" alt="foto4" class="thumb">
+      </div>
+    </section>
 
-  <div class="card" style="text-align:center">
-    <a href="tetris.html" class="button" style="text-decoration:none;display:inline-block">🎮 Play Tetris</a>
-  </div>
+    <section class="card video">
+      <h3>Day 1 — Momen Kita</h3>
+      <video id="day1video" controls playsinline preload="metadata" poster="public/video-poster.jpg">
+        <source src="public/day1.mp4" type="video/mp4">
+        Browser kamu tidak mendukung video.
+      </video>
+      <p class="hint">Saat video diputar, musik background akan berhenti sementara agar suaranya jelas.</p>
+    </section>
 
-  <div class="card">
-    <h3>Kritik, Saran & Doa</h3>
-    <form id="kritikForm">
-      <input id="nama" placeholder="Nama (opsional)" style="width:100%;padding:8px;margin-bottom:8px;border-radius:8px;border:1px solid #ddd">
-      <textarea id="pesan" placeholder="Kritik, saran, doa..." style="width:100%;height:90px;padding:8px;border-radius:8px;border:1px solid #ddd"></textarea>
-      <button type="submit" class="button" style="margin-top:8px">Kirim</button>
-      <div id="formMsg" style="margin-top:8px;color:#1b9b7a"></div>
-    </form>
-  </div>
+    <section class="card game">
+      <h3>Pixel Tetris — Quick Mode</h3>
+      <p class="hint">Main sebentar aja — pemanis.</p>
+      <a href="tetris.html" class="play-btn">▶️ Play Tetris</a>
+    </section>
 
-  <footer>© 2025 Chris & Ita — Made with pixels & love</footer>
-</div>
+    <section class="card feedback">
+      <h3>Kritik, Saran & Doa</h3>
+      <form id="feedbackForm">
+        <input id="nameField" placeholder="Nama (opsional)">
+        <textarea id="msgField" placeholder="Tulis kritik, saran, atau doa..." required></textarea>
+        <div class="row"><button type="submit" class="send-btn">Kirim</button></div>
+        <div id="formStatus" class="form-status"></div>
+      </form>
+      <p class="muted">Pesan akan dikirim ke Google Sheets (endpoint harus kamu isi di app.js).</p>
+    </section>
 
-<!-- audio element kept separate -->
-<audio id="siteAudio" src="public/music.mp3" preload="auto"></audio>
+    <footer class="footer">© 2025 Chris & Ita — Pixel Edition</footer>
+  </main>
 
-<script>
-const musicBtn = document.getElementById('musicBtn');
-const audio = document.getElementById('siteAudio');
-const video = document.getElementById('day1video');
-musicBtn.addEventListener('click', async ()=>{
-  try{ await audio.play(); document.getElementById('audioStatus').innerText='Audio siap — tekan tombol untuk memulai'; musicBtn.innerText='Music On'; }catch(e){ console.warn(e); document.getElementById('audioStatus').innerText='Browser blok autoplay — coba tap lagi'; }
-});
+  <audio id="siteAudio" src="public/music.mp3" preload="auto"></audio>
 
-// ensure video visual doesn't pause audio: mute video so audio keeps playing
-video.addEventListener('play', ()=>{ video.muted = true; if(audio.paused) audio.play().catch(()=>{}); });
-
-// story toggle
-document.getElementById('moreToggle').addEventListener('click', ()=>{
-  const full = document.getElementById('storyFull');
-  const prev = document.getElementById('storyPreview');
-  if(full.style.display==='none'){ full.style.display='block'; prev.style.display='none'; } else { full.style.display='none'; prev.style.display='block'; }
-});
-
-// Kritik form - by default just show message (user can replace endpoint)
-document.getElementById('kritikForm').addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  const nama = document.getElementById('nama').value;
-  const pesan = document.getElementById('pesan').value;
-  if(!pesan.trim()){ document.getElementById('formMsg').innerText='Tulis pesannya dulu.'; return; }
-  // TODO: replace endpoint with Apps Script URL
-  const endpoint = '';
-  if(endpoint===''){ document.getElementById('formMsg').innerText='(Form ready — belum terhubung ke Google Sheets)'; return; }
-  try{
-    const r = await fetch(endpoint, {method:'POST', body: JSON.stringify({name:nama, message:pesan})});
-    const j = await r.json();
-    if(j.status==='success'){ document.getElementById('formMsg').innerText='Terkirim — terima kasih!'; document.getElementById('nama').value=''; document.getElementById('pesan').value=''; }
-    else document.getElementById('formMsg').innerText='Gagal kirim.';
-  }catch(err){ document.getElementById('formMsg').innerText='Error saat kirim.'; console.error(err); }
-});
-</script>
-</body></html>
+  <script src="app.js"></script>
+</body>
+</html>
