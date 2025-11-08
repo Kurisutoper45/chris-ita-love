@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import TetrisMobile from "./TetrisMobile.jsx";
+import Guestbook from "./Guestbook.jsx";
 import { motion } from "framer-motion";
 
 const OUR_STORY = `— Chris & Ita
@@ -37,15 +38,19 @@ Dari pertemuan kecil itu, semesta ternyata lagi nulis salah satu kisah
 terindah dalam hidup kita. Kita bersyukur — dan kita masih excited
 buat nulis bab-bab selanjutnya bareng.`;
 
-
 export default function MobileLoveSite() {
   const [audio, setAudio] = useState(null);
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
   const [showInitOverlay, setShowInitOverlay] = useState(true);
+
   const [showGame, setShowGame] = useState(false);
+  const [gameOverScore, setGameOverScore] = useState(null);
+  const [showGameOverModal, setShowGameOverModal] = useState(false);
+
   const [showFullStory, setShowFullStory] = useState(false);
 
+  // init audio via explicit user tap
   const initAudio = async () => {
     try {
       const bg = new Audio("/music.mp3");
@@ -88,6 +93,7 @@ export default function MobileLoveSite() {
     }
   };
 
+  // cleanup audio on unmount
   useEffect(() => {
     return () => {
       try {
@@ -127,7 +133,7 @@ export default function MobileLoveSite() {
           )}
         </div>
 
-        {/* --- Collapsible Our Story --- */}
+        {/* Collapsible Our Story */}
         <article className="bg-white rounded-2xl p-4 mt-4 shadow-md">
           <h2 className="text-base font-bold mb-2">Our Story</h2>
 
@@ -192,22 +198,46 @@ export default function MobileLoveSite() {
         </section>
 
         <section className="mt-4 flex justify-center">
-          <button onClick={() => setShowGame(!showGame)} className="bg-yellow-300 text-pink-800 px-4 py-2 rounded-lg shadow">
+          <button onClick={() => setShowGame((s) => !s)} className="bg-yellow-300 text-pink-800 px-4 py-2 rounded-lg shadow">
             {showGame ? "Back to Story" : "🎮 Play Tetris"}
           </button>
         </section>
 
         {showGame && (
           <div className="mt-4">
-            <TetrisMobile />
+            <TetrisMobile
+              onGameOver={(score) => {
+                setGameOverScore(score);
+                setShowGameOverModal(true);
+              }}
+            />
           </div>
         )}
 
-        <footer className="mt-6 text-xs text-gray-500 text-center">
-          © 2025 Chris & Ita — Made with pixels & love
-        </footer>
+        <footer className="mt-6 text-xs text-gray-500 text-center">© 2025 Chris & Ita — Made with pixels & love</footer>
       </main>
 
+      {/* Game Over Modal with Guestbook */}
+      {showGameOverModal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.6)" }}>
+          <div className="bg-white rounded-lg p-4 max-w-md w-[92%]">
+            <h3 className="text-lg font-bold mb-2">Game Over</h3>
+            <p className="mb-2">Skormu: <strong>{gameOverScore}</strong></p>
+            <p className="text-sm text-gray-500 mb-3">Mau tinggalkan kritik, saran, atau doa buat Chris & Ita?</p>
+
+            <Guestbook formEndpoint={""} fallbackLocal={true} onSaved={() => {
+              // optional callback after saved
+            }} />
+
+            <div className="mt-3 flex gap-2 justify-end">
+              <button onClick={() => setShowGameOverModal(false)} className="px-3 py-2 bg-gray-200 rounded">Tutup</button>
+              <button onClick={() => { setShowGame(false); setShowGameOverModal(false); }} className="px-3 py-2 bg-blue-500 text-white rounded">Keluar ke Story</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* mandatory overlay for first touch to init audio */}
       {showInitOverlay && (
         <div
           style={{
