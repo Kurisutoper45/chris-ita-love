@@ -23,48 +23,58 @@ export default function MobileLoveSite() {
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [showGame, setShowGame] = useState(false);
 
-  // Note: do not create Audio() here on mount because some browsers
-  // consider it non-user gesture and will block playing. We'll create
-  // and play the audio inside the click handler.
+  // prepare audio on first user touch (so browser allows play later)
   useEffect(() => {
-    return () => {
-      // cleanup if component unmounts
+    const prepareAudioOnFirstTouch = async () => {
       try {
-        if (audio) {
-          audio.pause();
-          audio.currentTime = 0;
-        }
-      } catch (e) {}
+        const bg = new Audio("/music.mp3");
+        bg.loop = true;
+        await bg.play(); // allowed because it's triggered by touch/click handler
+        bg.pause();
+        bg.currentTime = 0;
+        setAudio(bg);
+      } catch (e) {
+        console.log("prepareAudioOnFirstTouch error:", e);
+      }
+    };
+
+    const handler = () => {
+      prepareAudioOnFirstTouch();
+      document.removeEventListener("touchstart", handler);
+      document.removeEventListener("click", handler);
+    };
+
+    document.addEventListener("touchstart", handler, { passive: true });
+    document.addEventListener("click", handler, { once: true });
+
+    return () => {
+      document.removeEventListener("touchstart", handler);
+      document.removeEventListener("click", handler);
+      try { if (audio) { audio.pause(); audio.currentTime = 0; } } catch (e) {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audio]);
+  }, []);
 
   const toggleMusic = async () => {
     try {
       if (musicPlaying) {
-        // stop music
-        if (audio) {
-          audio.pause();
-          audio.currentTime = 0;
-          setAudio(null);
-        }
+        if (audio) { audio.pause(); audio.currentTime = 0; }
         setMusicPlaying(false);
         return;
       }
 
-      // Create Audio right when user clicks — this counts as a user gesture
-      const bg = new Audio("/music.mp3"); // must be public/music.mp3
-      bg.loop = true;
+      let bg = audio;
+      if (!bg) {
+        bg = new Audio("/music.mp3");
+        bg.loop = true;
+        setAudio(bg);
+      }
 
-      // try play, await the promise so we handle errors
       await bg.play();
-      setAudio(bg);
       setMusicPlaying(true);
     } catch (e) {
-      // browser blocked or file missing
-      console.log("Audio play error:", e);
-      // optional: show tiny UI hint for the user
-      alert("Gagal memutar musik. Coba periksa koneksi atau ulangi tombol.");
+      console.log("Toggle play error:", e);
+      alert("Gagal memutar musik — coba tekan layar sekali lalu tekan tombol musik lagi.");
     }
   };
 
