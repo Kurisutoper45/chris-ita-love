@@ -1,121 +1,132 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useState } from "react";
+import TetrisMobile from "./TetrisMobile.jsx";
 import { motion } from "framer-motion";
-import TetrisMobile from "./TetrisMobile"; // will include below
 
-const GALLERY = [
-  { id:1, type:'photo', src:'https://via.placeholder.com/800x600?text=Foto+Chris+Ita+1', caption:'Senyum butuh 5 take' },
-  { id:2, type:'photo', src:'https://via.placeholder.com/800x600?text=Foto+Chris+Ita+2', caption:'Momen konyol bareng' },
-  { id:3, type:'video', src:'https://www.w3schools.com/html/mov_bbb.mp4', caption:'Momen Day 1 Pacaran' }
-];
+const OUR_STORY = `Kadang semesta punya cara yang aneh tapi indah buat mempertemukan dua orang.
+Nggak direncanain, nggak disengaja, cuma kebetulan yang ternyata berarti besar.
+Awalnya cuma basa-basi, obrolan ringan, dan tawa kecil — tapi lama-lama jadi cerita.
 
-const pixelCSS = `@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap'); .pixel-font{font-family:'Press Start 2P',monospace}.music-note{animation: floatUp 1800ms linear infinite} @keyframes floatUp{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-120px);opacity:0}} .music-pulse{animation: pulse 800ms ease-in-out infinite} @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.07)}100%{transform:scale(1)}}`;
+Ada momen-momen kecil: pesan tengah malam, ngopi bareng, ngetawain hal remeh.
+Ada juga ujian: beda jadwal, salah paham kecil, tapi kita belajar buat beresin.
+Yang penting: kita selalu kembali, dan kita selalu mau berusaha.
 
-export default function MobileLoveSite(){
-  const [showIntro, setShowIntro] = useState(true);
-  const [playMusic, setPlayMusic] = useState(false);
-  const audioRef = useRef(null);
-  const [typewriter, setTypewriter] = useState('');
-  const [gallery, setGallery] = useState(GALLERY);
-  const [active, setActive] = useState(null);
-  const [msg, setMsg] = useState('');
-  const [sent, setSent] = useState(false);
+Pada 23 Juli 2025 kita memilih buat lanjut bareng. Bukan sekadar 'pacaran',
+tapi niat buat saling menjaga, tumbuh bareng, dan nulis masa depan.
+Hari itu bukan akhir — itu awal dari sesuatu yang lebih nyata dan hangat.
 
-  const STORY = `Kadang semesta punya cara yang aneh tapi indah buat mempertemukan dua orang.\n\nNggak direncanain, nggak disengaja, cuma kebetulan yang ternyata berarti besar.\n\nBegitulah awal cerita kita...`;
+Terima kasih untuk semua tawa, kesabaran, dan harapan.
+Ini kisah dua orang yang bersyukur; dari perkenalan kecil, semesta ternyata
+membuka babak yang penuh warna.`;
 
-  useEffect(()=>{ if(showIntro && playMusic){ let i=0; setTypewriter(''); const iv=setInterval(()=>{ i++; setTypewriter(STORY.slice(0,i)); if(i>=STORY.length) clearInterval(iv); }, 22); return ()=>clearInterval(iv); } }, [showIntro, playMusic]);
+export default function MobileLoveSite() {
+  const [audio, setAudio] = useState(null);
+  const [musicPlaying, setMusicPlaying] = useState(false);
+  const [showGame, setShowGame] = useState(false);
 
-  function startMusic(){ setPlayMusic(true); if(audioRef.current) audioRef.current.play().catch(()=>{}); setTimeout(()=> setShowIntro(false), 2800); }
+  // Note: do not create Audio() here on mount because some browsers
+  // consider it non-user gesture and will block playing. We'll create
+  // and play the audio inside the click handler.
+  useEffect(() => {
+    return () => {
+      // cleanup if component unmounts
+      try {
+        if (audio) {
+          audio.pause();
+          audio.currentTime = 0;
+        }
+      } catch (e) {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audio]);
 
-  function openItem(it){ setActive(it); }
-  function closeItem(){ setActive(null); }
-  function sendMsg(){ if(!msg.trim()) return setMsg('Isi pesannya dulu.'); setGallery(g=> [{id:Date.now(), type:'note', caption:msg}, ...g]); setMsg(''); setSent(true); setTimeout(()=>setSent(false),4000); }
+  const toggleMusic = async () => {
+    try {
+      if (musicPlaying) {
+        // stop music
+        if (audio) {
+          audio.pause();
+          audio.currentTime = 0;
+          setAudio(null);
+        }
+        setMusicPlaying(false);
+        return;
+      }
+
+      // Create Audio right when user clicks — this counts as a user gesture
+      const bg = new Audio("/music.mp3"); // must be public/music.mp3
+      bg.loop = true;
+
+      // try play, await the promise so we handle errors
+      await bg.play();
+      setAudio(bg);
+      setMusicPlaying(true);
+    } catch (e) {
+      // browser blocked or file missing
+      console.log("Audio play error:", e);
+      // optional: show tiny UI hint for the user
+      alert("Gagal memutar musik. Coba periksa koneksi atau ulangi tombol.");
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-blue-50 p-4 text-gray-900">
-      <style>{pixelCSS}</style>
-      <div className="max-w-md mx-auto bg-white/90 rounded-xl p-4 shadow-lg">
-        {showIntro && (
-          <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-6">
-            <div className="text-center">
-              <h1 className="text-2xl text-green-300 mb-2 pixel-font">Our Story</h1>
-              <h2 className="text-sm text-pink-200 mb-4 pixel-font">Chris & Ita</h2>
-              <button onClick={startMusic} className={`mx-auto px-6 py-4 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 text-white font-bold pixel-font ${playMusic? 'music-pulse' : ''}`}>
-                🎵 Klik untuk nyalain musik & cerita
-              </button>
-              <p className="text-xs text-gray-200 mt-2">Tekan satu kali — biar audio bisa diputar di ponsel.</p>
-              {playMusic && (
-                <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none">
-                  <div className="text-white music-note">🎵</div>
-                  <div className="text-white music-note" style={{ animationDelay:'250ms' }}>💞</div>
-                  <div className="text-white music-note" style={{ animationDelay:'520ms' }}>✨</div>
-                </div>
-              )}
-            </div>
+    <div className="min-h-screen p-4 flex flex-col items-center">
+      <motion.header initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-md">
+        <div className="bg-white/90 rounded-2xl p-4 shadow-lg">
+          <h1 className="text-center font-bold text-lg">💞 Chris & Ita</h1>
+          <p className="text-center text-xs text-gray-500">Our Story — pixel edition</p>
+        </div>
+      </motion.header>
+
+      <main className="w-full max-w-md mt-4">
+        <section className="flex justify-center">
+          <button
+            onClick={toggleMusic}
+            className="bg-gradient-to-r from-pink-500 to-pink-400 text-white px-6 py-3 rounded-full shadow-md active:scale-95"
+            aria-pressed={musicPlaying}
+          >
+            {musicPlaying ? "🔊 Music On" : "🔇 Tap to Play Music"}
+          </button>
+        </section>
+
+        <article className="bg-white rounded-2xl p-4 mt-4 shadow-md">
+          <h2 className="text-sm font-bold mb-2">Our Story</h2>
+          <p className="text-xs leading-relaxed" style={{ whiteSpace: "pre-line" }}>
+            {OUR_STORY}
+          </p>
+        </article>
+
+        <section className="mt-4">
+          <h3 className="text-sm font-semibold mb-2">Gallery Kenangan</h3>
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            <img src="/moments/foto1.jpg" alt="foto1" className="w-40 h-56 object-cover rounded-lg" />
+            <img src="/moments/foto2.jpg" alt="foto2" className="w-40 h-56 object-cover rounded-lg" />
+            <img src="/moments/foto3.jpg" alt="foto3" className="w-40 h-56 object-cover rounded-lg" />
+          </div>
+        </section>
+
+        <section className="mt-4">
+          <h3 className="text-sm font-semibold">Momen Day 1 Pacaran</h3>
+          <p className="text-xs text-gray-500">Judul: Momen Day 1 Pacaran</p>
+          <video controls className="w-full rounded-lg mt-2" poster="/moments/thumb-day1.jpg">
+            <source src="/moments/day1.mp4" type="video/mp4" />
+            Your browser does not support HTML5 video.
+          </video>
+        </section>
+
+        <section className="mt-4 flex justify-center">
+          <button onClick={() => setShowGame(!showGame)} className="bg-yellow-300 text-pink-800 px-4 py-2 rounded-lg shadow">
+            {showGame ? "Back to Story" : "🎮 Play Tetris"}
+          </button>
+        </section>
+
+        {showGame && (
+          <div className="mt-4">
+            <TetrisMobile />
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-300 to-purple-400 flex items-center justify-center text-white pixel-font">C&I</div>
-            <div>
-              <div className="text-sm font-semibold pixel-font">Chris & Ita</div>
-              <div className="text-xs text-gray-500">Our Story — mobile version</div>
-            </div>
-          </div>
-          <div>
-            <button onClick={()=>{ if(audioRef.current){ if(playMusic){ audioRef.current.pause(); setPlayMusic(false); } else { audioRef.current.play().catch(()=>{}); setPlayMusic(true); } } }} className={`px-3 py-1 rounded border pixel-font`}>{playMusic? 'Stop' : 'Music'}</button>
-          </div>
-        </div>
-
-        <div className="mb-3">
-          <div className="text-xs text-gray-700" style={{lineHeight:1.4}}>{typewriter || 'Tekan tombol musik untuk mulai membaca kisah kami.'}</div>
-        </div>
-
-        <div>
-          <div className="text-sm font-medium mb-2 pixel-font">Gallery Kenangan</div>
-          <div className="grid grid-cols-2 gap-2">
-            {gallery.map(it=> (
-              <button key={it.id} onClick={()=> openItem(it)} className="bg-gray-100 rounded p-1 overflow-hidden">
-                {it.type==='photo' && <img src={it.src} alt={it.caption} className="w-full h-24 object-cover" />} 
-                {it.type==='video' && <div className="w-full h-24 flex items-center justify-center bg-black text-white">📼 {it.caption}</div>}
-                {it.type==='note' && <div className="w-full h-24 p-2 text-xs text-left">💬 {it.caption}</div>}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-3">
-          <div className="text-sm font-medium pixel-font mb-2">Tetris of Love (Touch Controls)</div>
-          <TetrisMobile onScore={(s)=>{}} />
-        </div>
-
-        <div className="mt-3">
-          <div className="text-sm font-medium pixel-font">Kirim Doa / Pesan</div>
-          <textarea value={msg} onChange={(e)=>setMsg(e.target.value)} placeholder="Tulis pesan..." className="w-full mt-2 p-2 rounded border text-sm h-20" />
-          <button onClick={sendMsg} className="w-full mt-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 rounded pixel-font">Kirim</button>
-          {sent && <div className="mt-2 text-xs text-green-700">Terima kasih! Pesan muncul di dinding.</div>}
-        </div>
-
-        <footer className="mt-4 text-xs text-center text-gray-500">Momen Day 1 Pacaran ada di gallery — klik untuk nonton.</footer>
-
-        {active && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded w-full max-w-md p-3">
-              <div className="flex justify-between items-center mb-2">
-                <div className="font-semibold pixel-font">{active.caption}</div>
-                <button onClick={closeItem} className="text-sm border rounded px-2 py-1">Tutup</button>
-              </div>
-              <div>
-                {active.type==='photo' && <img src={active.src} alt={active.caption} className="w-full h-80 object-cover" />}
-                {active.type==='video' && <video controls className="w-full h-80 bg-black"><source src={active.src} type="video/mp4"/>Browser nggak support video.</video>}
-                {active.type==='note' && <div className="p-2">{active.caption}</div>}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <audio ref={audioRef} loop src="https://cdn.simple-melodies.example/soft-loop.mp3" />
-      </div>
+        <footer className="mt-6 text-xs text-gray-500 text-center">© 2025 Chris & Ita — Made with pixels & love</footer>
+      </main>
     </div>
   );
 }
