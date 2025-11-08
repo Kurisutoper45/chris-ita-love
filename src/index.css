@@ -1,8 +1,0 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-html, body, #root { height: 100%; }
-body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Press Start 2P", "Helvetica Neue", Arial; -webkit-font-smoothing: antialiased; }
