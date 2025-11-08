@@ -1,20 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
 
 /*
-  TetrisMobile.jsx
-  - Basic, working Tetris engine in React (mobile-first)
-  - Touch controls: left, right, rotate, soft-drop
-  - Uses simple grid (20 rows x 10 cols)
-  - Calls props.onGameOver(score) when player loses
-  - Scoring: single line = 100, multiple lines give combo multiplier
-  - No external dependencies
+  TetrisMobile.jsx (patched)
+  - Mobile-first Tetris engine (plug-in replacement)
+  - Uses background at /tetris-bg.jpg (you already uploaded photo to /public)
+  - Calls props.onGameOver(score) on game over
+  - Touch controls + buttons
+  - Lightweight, no external deps
 */
 
 const ROWS = 20;
 const COLS = 10;
 const START_SPEED = 800; // ms drop interval
 
-// tetromino shapes and their rotations (4 rotation states)
 const TETROMINOES = {
   I: [
     [[0,1],[1,1],[2,1],[3,1]],
@@ -69,16 +67,9 @@ function emptyGrid() {
 function randomPiece() {
   const type = PIECES[Math.floor(Math.random() * PIECES.length)];
   const rot = 0;
-  const shape = TETROMINOES[type][rot];
-  // starting x offset puts piece roughly centered
   const startX = Math.floor((COLS / 2) - 2);
-  const startY = -1; // start slightly above
-  return { type, rot, x: startX, y: startY, shape };
-}
-
-function getCells(piece) {
-  const rotShape = TETROMINOES[piece.type][piece.rot];
-  return rotShape.map(([dx, dy]) => [piece.x + dx, piece.y + dy]);
+  const startY = -1;
+  return { type, rot, x: startX, y: startY };
 }
 
 function collides(grid, piece, offsetX = 0, offsetY = 0, newRot = null) {
@@ -103,9 +94,7 @@ export default function TetrisMobile({ onGameOver = null }) {
   const [speed, setSpeed] = useState(START_SPEED);
   const [level, setLevel] = useState(1);
   const tickRef = useRef(null);
-  const lockDelayRef = useRef(0);
 
-  // helper to merge piece into new grid (for rendering static snapshot)
   const getGridWithPiece = (g = grid, p = piece) => {
     const copy = g.map(row => row.slice());
     if (p) {
@@ -120,7 +109,6 @@ export default function TetrisMobile({ onGameOver = null }) {
     return copy;
   };
 
-  // start/reset
   const startGame = () => {
     setGrid(emptyGrid());
     setPiece(randomPiece());
@@ -131,13 +119,11 @@ export default function TetrisMobile({ onGameOver = null }) {
     setRunning(true);
   };
 
-  // end game
-  const endGame = (reason = "quit") => {
+  const endGame = (reason = "user") => {
     setRunning(false);
     if (typeof onGameOver === "function") onGameOver(score);
   };
 
-  // lock piece into grid and spawn next
   const lockPiece = (p) => {
     const g = grid.map(r => r.slice());
     TETROMINOES[p.type][p.rot].forEach(([dx, dy]) => {
@@ -146,29 +132,25 @@ export default function TetrisMobile({ onGameOver = null }) {
       if (y >= 0 && y < ROWS && x >= 0 && x < COLS) {
         g[y][x] = p.type;
       } else if (y < 0) {
-        // locked above visible area -> game over
         setGrid(g);
         setRunning(false);
         if (typeof onGameOver === "function") onGameOver(score);
       }
     });
 
-    // clear lines
     let linesCleared = 0;
     for (let r = ROWS - 1; r >= 0; r--) {
       if (g[r].every(cell => cell !== null)) {
         g.splice(r, 1);
         g.unshift(Array.from({ length: COLS }, () => null));
         linesCleared++;
-        r++; // re-check same row index because rows shifted
+        r++;
       }
     }
 
-    // scoring
     if (linesCleared > 0) {
-      const points = 100 * (linesCleared ** 2); // 1->100,2->400,3->900,4->1600
+      const points = 100 * (linesCleared ** 2);
       setScore(s => s + points);
-      // speed up slightly every 5 lines (simple)
       setLevel(l => {
         const nl = l + Math.floor(linesCleared / 2);
         setSpeed(Math.max(150, START_SPEED - (nl - 1) * 60));
@@ -181,9 +163,8 @@ export default function TetrisMobile({ onGameOver = null }) {
     setNextPiece(randomPiece());
   };
 
-  // piece movement functions
   const move = (dx, dy) => {
-    if (!piece) return;
+    if (!piece) return false;
     if (!collides(grid, piece, dx, dy)) {
       setPiece(p => ({ ...p, x: p.x + dx, y: p.y + dy }));
       return true;
@@ -192,9 +173,8 @@ export default function TetrisMobile({ onGameOver = null }) {
   };
 
   const rotate = (dir = 1) => {
-    if (!piece) return;
+    if (!piece) return false;
     const newRot = (piece.rot + dir + 4) % 4;
-    // try wall kicks: none fancy, try offsets
     const kicks = [0, -1, 1, -2, 2];
     for (let k of kicks) {
       if (!collides(grid, piece, k, 0, newRot)) {
@@ -213,7 +193,6 @@ export default function TetrisMobile({ onGameOver = null }) {
     lockPiece({ ...piece, y: piece.y + fall });
   };
 
-  // gravity tick
   useEffect(() => {
     if (!running) {
       if (tickRef.current) {
@@ -222,7 +201,6 @@ export default function TetrisMobile({ onGameOver = null }) {
       }
       return;
     }
-    // clear previous
     if (tickRef.current) clearInterval(tickRef.current);
     tickRef.current = setInterval(() => {
       setPiece((p) => {
@@ -230,9 +208,8 @@ export default function TetrisMobile({ onGameOver = null }) {
         if (!collides(grid, p, 0, 1)) {
           return { ...p, y: p.y + 1 };
         } else {
-          // can't move down -> lock
           lockPiece(p);
-          return randomPiece(); // but lockPiece previously sets piece to nextPiece via state, so this return may be ignored; safe fallback
+          return randomPiece();
         }
       });
     }, speed);
@@ -242,10 +219,8 @@ export default function TetrisMobile({ onGameOver = null }) {
         tickRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running, grid, speed]);
 
-  // keyboard controls (for convenience desktop)
   useEffect(() => {
     const handleKey = (e) => {
       if (!running) return;
@@ -270,7 +245,6 @@ export default function TetrisMobile({ onGameOver = null }) {
     return () => window.removeEventListener("keydown", handleKey);
   }, [running, grid, piece]);
 
-  // touch controls handlers (throttle basic)
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const lastTap = useRef(0);
@@ -290,21 +264,17 @@ export default function TetrisMobile({ onGameOver = null }) {
     const absX = Math.abs(dx);
     const absY = Math.abs(dy);
 
-    // swipe thresholds
     if (absX > 30 && absX > absY) {
-      // horizontal swipe
       if (dx > 0) move(1, 0);
       else move(-1, 0);
       return;
     }
 
     if (absY > 30 && absY > absX) {
-      // vertical swipe down -> soft drop
       if (dy > 0) move(0, 1);
       return;
     }
 
-    // tap => rotate (double-tap => hard drop)
     const now = Date.now();
     if (now - lastTap.current < 300) {
       hardDrop();
@@ -315,17 +285,13 @@ export default function TetrisMobile({ onGameOver = null }) {
     }
   };
 
-  // if piece initial spawn collides immediately => game over
   useEffect(() => {
     if (piece && collides(grid, piece, 0, 0)) {
-      // immediate collision => game over
       setRunning(false);
       if (typeof onGameOver === "function") onGameOver(score);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [piece]);
 
-  // small UI helpers
   const colorFor = (type) => {
     const map = {
       I: "#4dd0e1",
@@ -339,13 +305,13 @@ export default function TetrisMobile({ onGameOver = null }) {
     return map[type] || "#ccc";
   };
 
-  // render grid cell
   const Cell = ({ value }) => {
-    const style = value ? { background: colorFor(value), borderRadius: 4 } : { background: "transparent" };
+    const style = value
+      ? { background: colorFor(value), borderRadius: 4, boxShadow: "inset 0 0 0 2px rgba(255,255,255,0.12)" }
+      : { background: "rgba(255,255,255,0.08)", borderRadius: 4, border: "1px solid rgba(0,0,0,0.04)" };
     return <div className="cell" style={style} />;
   };
 
-  // small controls for mobile: separate buttons
   return (
     <div className="w-full bg-white p-3 rounded-lg shadow">
       <div className="flex justify-between items-center mb-2">
@@ -353,12 +319,10 @@ export default function TetrisMobile({ onGameOver = null }) {
         <div className="text-xs">Level: {level}</div>
       </div>
 
-      {/* Next piece preview */}
       <div className="mb-3 flex gap-3 items-center">
         <div className="text-xs text-gray-500">Next:</div>
         <div style={{ width: 48, height: 48, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1 }}>
           {Array.from({ length: 4 * 4 }).map((_, i) => {
-            // draw small 4x4 block
             const row = Math.floor(i / 4);
             const col = i % 4;
             const s = TETROMINOES[nextPiece.type][0];
@@ -368,7 +332,7 @@ export default function TetrisMobile({ onGameOver = null }) {
         </div>
       </div>
 
-      {/* game area */}
+      {/* patched wrapper uses background image at /tetris-bg.jpg */}
       <div
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
@@ -378,16 +342,32 @@ export default function TetrisMobile({ onGameOver = null }) {
           margin: "0 auto",
           borderRadius: 8,
           overflow: "hidden",
+          position: "relative",
+          backgroundImage: `url('/tetris-bg.jpg')`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
         }}
       >
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${COLS}, 1fr)`, gap: 2, background: "#e6e6e6", padding: 6 }}>
-          {getGridWithPiece().map((row, r) =>
-            row.map((cell, c) => <Cell key={`${r}-${c}`} value={cell} />)
-          )}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "rgba(255,255,255,0.38)",
+            backdropFilter: "blur(3px)",
+            WebkitBackdropFilter: "blur(3px)",
+          }}
+        />
+
+        <div style={{ position: "relative", zIndex: 1, padding: 6 }}>
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${COLS}, 1fr)`, gap: 2, background: "transparent" }}>
+            {getGridWithPiece().map((row, r) =>
+              row.map((cell, c) => <Cell key={`${r}-${c}`} value={cell} />)
+            )}
+          </div>
         </div>
       </div>
 
-      {/* mobile action buttons */}
       <div className="mt-3 flex justify-center gap-3">
         <button onClick={() => move(-1, 0)} className="px-4 py-2 bg-gray-200 rounded">◀</button>
         <button onClick={() => rotate(1)} className="px-4 py-2 bg-blue-500 text-white rounded">⟳</button>
@@ -396,7 +376,6 @@ export default function TetrisMobile({ onGameOver = null }) {
         <button onClick={() => hardDrop()} className="px-4 py-2 bg-red-500 text-white rounded">Drop</button>
       </div>
 
-      {/* play controls */}
       <div className="mt-3 flex gap-2 justify-center">
         {!running ? (
           <button onClick={startGame} className="px-4 py-2 bg-green-500 text-white rounded">Start</button>
@@ -419,7 +398,6 @@ export default function TetrisMobile({ onGameOver = null }) {
           min-height: 0;
           height: 0;
         }
-        /* small visual tweak: use inner pseudo element via inline simple styles above */
       `}</style>
     </div>
   );
